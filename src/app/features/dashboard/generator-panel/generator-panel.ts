@@ -68,6 +68,7 @@ interface ArtistSlot {
   rawSearchResults: SpotifyArtist[];
   isSearching: boolean;
   searchError: string | null;
+  fuzzyMatching: boolean;
 }
 
 interface ArtistPreviewState {
@@ -114,7 +115,6 @@ export class GeneratorPanel {
   protected readonly artistSlots = signal<ArtistSlot[] | null>(null);
   protected readonly exhaustedSlotIds = signal<Set<string>>(new Set());
   protected readonly infoMessage = signal<string | null>(null);
-  protected readonly fuzzyMatching = signal(false);
 
   // Hover/focus preview shown in the resolution (ambiguous-match) panels only. Top-track
   // lookups are cached per artist id for as long as we're on the Songs tab, so re-hovering
@@ -217,6 +217,7 @@ export class GeneratorPanel {
       rawSearchResults: [],
       isSearching: false,
       searchError: null,
+      fuzzyMatching: false,
     }));
     this.artistSlots.set(placeholders);
     this.activeTab.set('songs');
@@ -255,6 +256,7 @@ export class GeneratorPanel {
       tracks: [] as SpotifyTrack[],
       excludedTrackIds: new Set<string>(),
       isSearching: false,
+      fuzzyMatching: false,
     };
 
     try {
@@ -380,12 +382,16 @@ export class GeneratorPanel {
     });
   }
 
-  // The results actually shown for a slot: Spotify's raw matches when fuzzy matching is on,
-  // or narrowed to ones whose name contains what was typed when it's off. Computed at display
-  // time (rather than baked in when fetched) so toggling fuzzy matching updates every panel
-  // bound to the shared signal instantly, with no re-fetch.
+  // The results actually shown for a slot: Spotify's raw matches when that slot's fuzzy
+  // toggle is on, or narrowed to ones whose name contains what was typed when it's off.
+  // Computed at display time (rather than baked in when fetched) so toggling updates
+  // instantly, with no re-fetch — and each slot's toggle is independent of the others.
   protected visibleResults(slot: ArtistSlot): SpotifyArtist[] {
-    return this.fuzzyMatching() ? slot.rawSearchResults : this.applyStrictFilter(slot.rawSearchResults, slot.queryText);
+    return slot.fuzzyMatching ? slot.rawSearchResults : this.applyStrictFilter(slot.rawSearchResults, slot.queryText);
+  }
+
+  toggleFuzzyMatching(slot: ArtistSlot): void {
+    this.updateSlot(slot.id, { fuzzyMatching: !slot.fuzzyMatching });
   }
 
   private applyStrictFilter(candidates: SpotifyArtist[], query: string): SpotifyArtist[] {

@@ -163,10 +163,10 @@
                       type="button"
                       class="switch"
                       role="switch"
-                      [attr.aria-checked]="fuzzyMatching()"
-                      [class.on]="fuzzyMatching()"
-                      (click)="fuzzyMatching.set(!fuzzyMatching())"
-                      title="Off: only show artists whose name contains what you typed. On: allow Spotify's broader, less exact matches too. Applies to every artist below."
+                      [attr.aria-checked]="slot.fuzzyMatching"
+                      [class.on]="slot.fuzzyMatching"
+                      (click)="toggleFuzzyMatching(slot)"
+                      title="Off: only show artists whose name contains what you typed. On: allow Spotify's broader, less exact matches too. Only affects this artist."
                     >
                       <span class="switch-thumb"></span>
                     </button>
