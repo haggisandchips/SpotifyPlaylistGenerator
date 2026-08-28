@@ -1,0 +1,41 @@
+.dashboard {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.display-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.email,
+.product {
+  color: #666;
+  margin: 0.25rem 0;
+}
+
+.error {
+  color: #e22134;
+}

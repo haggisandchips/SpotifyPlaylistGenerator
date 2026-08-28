@@ -1,0 +1,12 @@
+<section class="hero">
+  <h1>Spotify Playlist Generator</h1>
+  <p>Sign in with your Spotify account to get started.</p>
+
+  @if (isAuthenticated()) {
+    <button type="button" class="btn btn-primary" (click)="goToDashboard()">Go to dashboard</button>
+  } @else {
+    <button type="button" class="btn btn-primary" [disabled]="isRedirecting()" (click)="login()">
+      {{ isRedirecting() ? 'Redirecting to Spotify…' : 'Log in with Spotify' }}
+    </button>
+  }
+</section>

@@ -1,0 +1,8 @@
+<section class="callback">
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+    <button type="button" class="btn btn-primary" (click)="goHome()">Back to home</button>
+  } @else {
+    <p>Signing you in with Spotify…</p>
+  }
+</section>

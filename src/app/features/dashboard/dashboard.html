@@ -1,0 +1,24 @@
+<section class="dashboard">
+  <header class="dashboard-header">
+    <h1>Dashboard</h1>
+    <button type="button" class="btn btn-secondary" (click)="logout()">Log out</button>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  } @else if (profile(); as user) {
+    <div class="profile-card">
+      @if (user.images.length) {
+        <img [src]="user.images[0].url" [alt]="user.display_name ?? user.id" class="avatar" />
+      }
+      <div>
+        <p class="display-name">{{ user.display_name ?? user.id }}</p>
+        <p class="email">{{ user.email }}</p>
+        <p class="product">Spotify {{ user.product }}</p>
+        <a [href]="user.external_urls.spotify" target="_blank" rel="noopener">View on Spotify</a>
+      </div>
+    </div>
+  } @else {
+    <p>Loading your Spotify profile…</p>
+  }
+</section>
