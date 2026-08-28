@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="Spotify Playlist Generator">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#121212"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="300" fill="url(#bg)"/>
+
+  <!-- faint scattered background notes -->
+  <g fill="#1db954" opacity="0.08">
+    <g transform="translate(60 40) scale(0.55)">
+      <rect x="25" y="9" width="25" height="6" rx="2"/>
+      <rect x="25" y="12" width="3" height="35" rx="1.5"/>
+      <rect x="47" y="12" width="3" height="23" rx="1.5"/>
+      <ellipse cx="20.67" cy="47" rx="7.5" ry="5.5" transform="rotate(-18 20.67 47)"/>
+      <ellipse cx="42.67" cy="35" rx="7.5" ry="5.5" transform="rotate(-18 42.67 35)"/>
+    </g>
+    <g transform="translate(1020 190) scale(0.7)">
+      <rect x="25" y="9" width="25" height="6" rx="2"/>
+      <rect x="25" y="12" width="3" height="35" rx="1.5"/>
+      <rect x="47" y="12" width="3" height="23" rx="1.5"/>
+      <ellipse cx="20.67" cy="47" rx="7.5" ry="5.5" transform="rotate(-18 20.67 47)"/>
+      <ellipse cx="42.67" cy="35" rx="7.5" ry="5.5" transform="rotate(-18 42.67 35)"/>
+    </g>
+    <g transform="translate(1100 30) scale(0.4)">
+      <rect x="25" y="9" width="25" height="6" rx="2"/>
+      <rect x="25" y="12" width="3" height="35" rx="1.5"/>
+      <rect x="47" y="12" width="3" height="23" rx="1.5"/>
+      <ellipse cx="20.67" cy="47" rx="7.5" ry="5.5" transform="rotate(-18 20.67 47)"/>
+      <ellipse cx="42.67" cy="35" rx="7.5" ry="5.5" transform="rotate(-18 42.67 35)"/>
+    </g>
+  </g>
+
+  <!-- badge + note mark -->
+  <g transform="translate(70 74)">
+    <rect x="0" y="0" width="152" height="152" rx="34" fill="#1db954"/>
+    <g fill="#121212" transform="translate(20 18) scale(1.85)">
+      <rect x="25" y="9" width="25" height="6" rx="2"/>
+      <rect x="25" y="12" width="3" height="35" rx="1.5"/>
+      <rect x="47" y="12" width="3" height="23" rx="1.5"/>
+      <ellipse cx="20.67" cy="47" rx="7.5" ry="5.5" transform="rotate(-18 20.67 47)"/>
+      <ellipse cx="42.67" cy="35" rx="7.5" ry="5.5" transform="rotate(-18 42.67 35)"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="264" y="152" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#ffffff">Spotify Playlist</text>
+  <text x="264" y="220" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#1db954">Generator</text>
+</svg>

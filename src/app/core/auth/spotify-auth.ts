@@ -29,6 +29,14 @@ export class SpotifyAuth {
   readonly isAuthenticated = signal(this.tokens() !== null);
 
   async login(): Promise<void> {
+    if (!window.isSecureContext) {
+      throw new Error(
+        'Spotify login requires a secure connection. This page was loaded over plain HTTP from a ' +
+          'non-localhost address, so the browser has disabled the crypto APIs PKCE needs. Serve the ' +
+          'app over HTTPS (or from localhost/127.0.0.1) to sign in.',
+      );
+    }
+
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = await generateCodeChallenge(codeVerifier);
     const state = generateState();

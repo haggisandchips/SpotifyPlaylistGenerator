@@ -14,13 +14,20 @@ export class Home {
 
   protected readonly isAuthenticated = this.auth.isAuthenticated;
   protected readonly isRedirecting = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
 
   goToDashboard(): void {
     this.router.navigateByUrl('/dashboard');
   }
 
   async login(): Promise<void> {
+    this.errorMessage.set(null);
     this.isRedirecting.set(true);
-    await this.auth.login();
+    try {
+      await this.auth.login();
+    } catch (err) {
+      this.isRedirecting.set(false);
+      this.errorMessage.set(err instanceof Error ? err.message : 'Failed to start Spotify login.');
+    }
   }
 }

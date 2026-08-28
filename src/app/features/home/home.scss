@@ -8,3 +8,26 @@
   text-align: center;
   padding: 2rem;
 }
+
+.banner {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 16px;
+}
+
+.error {
+  color: #e22134;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
