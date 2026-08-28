@@ -1,0 +1,356 @@
+<section class="generator">
+  <div class="tabs" role="tablist">
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.active]="activeTab() === 'artists'"
+      [attr.aria-selected]="activeTab() === 'artists'"
+      [disabled]="!isTabReachable('artists')"
+      (click)="goToTab('artists')"
+    >
+      Artists
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.active]="activeTab() === 'songs'"
+      [attr.aria-selected]="activeTab() === 'songs'"
+      [disabled]="!isTabReachable('songs')"
+      (click)="goToTab('songs')"
+    >
+      Songs
+    </button>
+    @if (!selectedPlaylistId()) {
+      <button
+        type="button"
+        class="tab"
+        role="tab"
+        [class.active]="activeTab() === 'generate'"
+        [attr.aria-selected]="activeTab() === 'generate'"
+        [disabled]="!isTabReachable('generate')"
+        (click)="goToTab('generate')"
+      >
+        Generate
+      </button>
+    }
+  </div>
+
+  <div class="tab-panel">
+    @switch (activeTab()) {
+      @case ('artists') {
+        <div class="step">
+          <label class="field-label required" for="artists-input">Artists:</label>
+          <textarea
+            id="artists-input"
+            class="artists-textarea"
+            rows="6"
+            placeholder="One artist per line…"
+            title="List the artists you want, one per line"
+            required
+            aria-required="true"
+            [value]="artistsInput()"
+            (input)="artistsInput.set($any($event.target).value)"
+          ></textarea>
+
+          @if (lookupError()) {
+            <p class="error">{{ lookupError() }}</p>
+          }
+
+          @if (!hasArtists() && !isLookingUp()) {
+            <p class="required-hint">Enter at least one artist to continue.</p>
+          }
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="!hasArtists() || isLookingUp()"
+            (click)="lookupArtists()"
+          >
+            {{ isLookingUp() ? 'Looking up artists…' : 'Next' }}
+          </button>
+        </div>
+      }
+
+      @case ('songs') {
+        <div class="step">
+          @if (infoMessage(); as msg) {
+            <p class="info">
+              <span>{{ msg }}</span>
+              <button type="button" class="info-dismiss" (click)="infoMessage.set(null)" aria-label="Dismiss">✕</button>
+            </p>
+          }
+
+          <div class="artist-panels">
+            @for (slot of displaySlots(); track slot.id) {
+              <div class="artist-panel">
+                @if (slot.status === 'loading') {
+                  <div class="artist-header">
+                    <div class="artist-avatar artist-avatar-placeholder artist-avatar-loading"></div>
+                    <span class="artist-name">{{ slot.queryText }}</span>
+                  </div>
+                  <p class="search-status">Looking up…</p>
+                } @else if (slot.status === 'resolved') {
+                  <div class="artist-header">
+                    @if (slot.artist!.images?.length) {
+                      <img [src]="slot.artist!.images[0].url" [alt]="slot.artist!.name" class="artist-avatar" />
+                    } @else {
+                      <div class="artist-avatar artist-avatar-placeholder"></div>
+                    }
+                    <span class="artist-name">{{ slot.artist!.name }}</span>
+                    <button
+                      type="button"
+                      class="change-btn"
+                      (click)="changeArtist(slot)"
+                      title="Not the right artist? Search for a different one"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  @if (slot.tracks.length) {
+                    <ul class="track-list">
+                      @for (track of slot.tracks; track track.id) {
+                        <li class="track-item">
+                          <span class="track-name">{{ track.name }}</span>
+                          <button
+                            type="button"
+                            class="icon-btn icon-btn-remove"
+                            (click)="removeTrack(slot.id, track.id)"
+                            [attr.aria-label]="'Remove ' + track.name"
+                            title="Remove this track"
+                          >
+                            🗑
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="artist-placeholder">No tracks selected.</p>
+                  }
+
+                  <div class="add-more-wrap">
+                    <button
+                      type="button"
+                      class="btn btn-secondary add-more-btn"
+                      [disabled]="exhaustedSlotIds().has(slot.id)"
+                      (click)="addMoreTracks(slot)"
+                      title="Add up to 5 more of this artist's top tracks"
+                    >
+                      Add More
+                    </button>
+                  </div>
+                } @else {
+                  <p class="search-hint">
+                    We couldn't confidently match "{{ slot.queryText }}". Search below and click an artist's picture
+                    to confirm who you meant.
+                  </p>
+
+                  <div class="search-row">
+                    <label class="field-label search-row-label" [for]="'artist-search-' + slot.id">Artist:</label>
+                    <input
+                      [id]="'artist-search-' + slot.id"
+                      type="text"
+                      class="text-input search-input"
+                      placeholder="Search for an artist…"
+                      title="Type to search Spotify for this artist"
+                      [value]="slot.queryText"
+                      (input)="onSearchTextChange(slot.id, $any($event.target).value)"
+                    />
+                    <span class="switch-label">Fuzzy:</span>
+                    <button
+                      type="button"
+                      class="switch"
+                      role="switch"
+                      [attr.aria-checked]="fuzzyMatching()"
+                      [class.on]="fuzzyMatching()"
+                      (click)="fuzzyMatching.set(!fuzzyMatching())"
+                      title="Off: only show artists whose name contains what you typed. On: allow Spotify's broader, less exact matches too. Applies to every artist below."
+                    >
+                      <span class="switch-thumb"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary search-remove-btn"
+                      (click)="removeSlot(slot.id)"
+                      title="Forget about this artist entirely"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  @if (slot.searchError) {
+                    <p class="error">{{ slot.searchError }}</p>
+                  } @else if (slot.isSearching) {
+                    <p class="search-status">Searching…</p>
+                  } @else if (visibleResults(slot); as results) {
+                    @if (results.length) {
+                      <div class="artist-results-wrap" #resultsWrap>
+                        <div class="artist-results">
+                          @for (candidate of results; track candidate.id) {
+                            <button
+                              type="button"
+                              class="artist-result"
+                              (click)="selectArtist(slot.id, candidate)"
+                              (mouseenter)="onCandidateHoverStart(slot.id, candidate, resultsWrap)"
+                              (mouseleave)="onCandidateHoverEnd(slot.id, candidate.id)"
+                              (focus)="onCandidateHoverStart(slot.id, candidate, resultsWrap)"
+                              (blur)="onCandidateHoverEnd(slot.id, candidate.id)"
+                              [title]="'Use ' + candidate.name"
+                            >
+                              @if (candidate.images?.length) {
+                                <img
+                                  [src]="candidate.images[0].url"
+                                  [alt]="candidate.name"
+                                  class="artist-result-image"
+                                />
+                              } @else {
+                                <div class="artist-result-image artist-result-placeholder"></div>
+                              }
+                              <span class="artist-result-name">{{ candidate.name }}</span>
+                            </button>
+                          }
+                        </div>
+
+                        @if (hoveredCandidate(); as hovered) {
+                          @if (hovered.slotId === slot.id) {
+                            <div
+                              class="artist-preview"
+                              [class.artist-preview-above]="previewPlacement() === 'above'"
+                              [class.artist-preview-below]="previewPlacement() === 'below'"
+                            >
+                              <p class="artist-preview-name">{{ hovered.candidate.name }}</p>
+                              <p class="artist-preview-meta">
+                                {{ hovered.candidate.genres.length ? hovered.candidate.genres.join(', ') : 'No genres listed' }}
+                              </p>
+                              <p class="artist-preview-meta">Popularity: {{ hovered.candidate.popularity }}/100</p>
+
+                              @if (artistPreviews().get(hovered.candidate.id); as preview) {
+                                @if (preview.isLoading) {
+                                  <p class="search-status">Loading top tracks…</p>
+                                } @else if (preview.error) {
+                                  <p class="error">{{ preview.error }}</p>
+                                } @else if (preview.tracks.length) {
+                                  <ul class="artist-preview-tracks">
+                                    @for (track of preview.tracks; track track.id) {
+                                      <li>{{ track.name }}</li>
+                                    }
+                                  </ul>
+                                } @else {
+                                  <p class="search-status">No top tracks found.</p>
+                                }
+                              } @else {
+                                <p class="search-status">Loading top tracks…</p>
+                              }
+                            </div>
+                          }
+                        }
+                      </div>
+                    } @else if (slot.queryText.trim()) {
+                      <p class="search-status">No artists found for "{{ slot.queryText.trim() }}".</p>
+                    }
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          @if (!allArtistsResolved()) {
+            <p class="required-hint">Resolve or remove every artist to continue.</p>
+          } @else if (!hasAnyTracks()) {
+            <p class="required-hint">Select at least one track to continue.</p>
+          }
+
+          @if (selectedPlaylistId(); as playlistId) {
+            @if (addError()) {
+              <p class="error">{{ addError() }}</p>
+            }
+            <div class="step-actions">
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!hasAnyTracks() || !allArtistsResolved() || isAddingToPlaylist()"
+                (click)="addSongsToSelectedPlaylist(playlistId)"
+              >
+                {{ isAddingToPlaylist() ? 'Adding…' : 'Add' }}
+              </button>
+            </div>
+          } @else {
+            <div class="step-actions">
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!hasAnyTracks() || !allArtistsResolved()"
+                (click)="goToGenerateTab()"
+              >
+                Next
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      @case ('generate') {
+        <div class="step">
+          <label class="field-label required" for="playlist-name">Playlist Name:</label>
+          <input
+            id="playlist-name"
+            type="text"
+            class="text-input"
+            required
+            aria-required="true"
+            [value]="playlistName()"
+            (input)="playlistName.set($any($event.target).value)"
+          />
+
+          <label class="field-label" for="playlist-description">Description:</label>
+          <textarea
+            id="playlist-description"
+            class="description-textarea"
+            rows="5"
+            [value]="playlistDescription()"
+            (input)="playlistDescription.set($any($event.target).value)"
+          ></textarea>
+
+          <div class="switch-row">
+            <span class="switch-label">Private:</span>
+            <button
+              type="button"
+              class="switch"
+              role="switch"
+              [attr.aria-checked]="isPrivate()"
+              [class.on]="isPrivate()"
+              (click)="isPrivate.set(!isPrivate())"
+              title="Make the generated playlist private"
+            >
+              <span class="switch-thumb"></span>
+            </button>
+          </div>
+
+          @if (generateError()) {
+            <p class="error">{{ generateError() }}</p>
+          }
+
+          @if (!hasPlaylistName() && !isGenerating()) {
+            <p class="required-hint">Enter a playlist name to continue.</p>
+          }
+
+          <div class="step-actions">
+            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!hasPlaylistName() || isGenerating()"
+              (click)="generatePlaylist()"
+            >
+              {{ isGenerating() ? 'Generating…' : 'Generate' }}
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>

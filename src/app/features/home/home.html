@@ -1,6 +1,11 @@
 <section class="hero">
-  <h1>Spotify Playlist Generator</h1>
+  <h1 class="sr-only">Spotify Playlist Generator</h1>
+  <img class="banner" src="brand-banner.svg" alt="Spotify Playlist Generator" width="1200" height="300" />
   <p>Sign in with your Spotify account to get started.</p>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
 
   @if (isAuthenticated()) {
     <button type="button" class="btn btn-primary" (click)="goToDashboard()">Go to dashboard</button>

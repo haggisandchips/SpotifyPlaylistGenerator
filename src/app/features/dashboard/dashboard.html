@@ -1,24 +1,87 @@
-<section class="dashboard">
-  <header class="dashboard-header">
-    <h1>Dashboard</h1>
-    <button type="button" class="btn btn-secondary" (click)="logout()">Log out</button>
+<div class="page">
+  <header class="banner">
+    <img src="brand-banner.svg" alt="Spotify Playlist Generator" class="banner-image" />
+
+    @if (profile(); as user) {
+      <div class="profile-panel">
+        <div class="profile-info">
+          @if (user.images?.length) {
+            <img [src]="user.images[0].url" [alt]="user.display_name ?? user.id" class="avatar" />
+          }
+          <div class="profile-text">
+            <p class="display-name">{{ user.display_name ?? user.id }}</p>
+            <p class="email">{{ user.email }}</p>
+            <p class="product">Spotify {{ user.product }}</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" (click)="logout()">Log out</button>
+      </div>
+    }
   </header>
 
-  @if (errorMessage()) {
-    <p class="error">{{ errorMessage() }}</p>
-  } @else if (profile(); as user) {
-    <div class="profile-card">
-      @if (user.images.length) {
-        <img [src]="user.images[0].url" [alt]="user.display_name ?? user.id" class="avatar" />
+  <main class="content">
+    @if (errorMessage()) {
+      <p class="error">{{ errorMessage() }}</p>
+    } @else if (!profile()) {
+      <p>Loading your Spotify profile…</p>
+    }
+
+    <section class="playlists">
+      <h2>Your playlists</h2>
+
+      @if (playlistsError()) {
+        <p class="error">{{ playlistsError() }}</p>
+      } @else if (playlists(); as items) {
+        @if (items.length) {
+          <div class="carousel">
+            <button type="button" class="carousel-arrow" (click)="scrollCarousel(-1)" aria-label="Scroll left">
+              ‹
+            </button>
+
+            <div class="carousel-track" #carouselTrack>
+              @for (playlist of items; track playlist.id) {
+                <button
+                  type="button"
+                  class="playlist-card"
+                  [class.selected]="selectedPlaylistId() === playlist.id"
+                  [attr.aria-pressed]="selectedPlaylistId() === playlist.id"
+                  (click)="selectPlaylist(playlist.id)"
+                >
+                  <span class="playlist-image-wrap">
+                    @if (playlist.images?.length) {
+                      <img [src]="playlist.images[0].url" [alt]="playlist.name" class="playlist-image" />
+                    } @else {
+                      <span class="playlist-image playlist-image-placeholder"></span>
+                    }
+                    @if (selectedPlaylistId() === playlist.id) {
+                      <span class="playlist-check" aria-hidden="true">✓</span>
+                    }
+                  </span>
+                  <span class="playlist-name">{{ playlist.name }}</span>
+                </button>
+              }
+            </div>
+
+            <button type="button" class="carousel-arrow" (click)="scrollCarousel(1)" aria-label="Scroll right">
+              ›
+            </button>
+          </div>
+        } @else {
+          <p>You don't have any playlists yet.</p>
+        }
+      } @else {
+        <p>Loading your playlists…</p>
       }
-      <div>
-        <p class="display-name">{{ user.display_name ?? user.id }}</p>
-        <p class="email">{{ user.email }}</p>
-        <p class="product">Spotify {{ user.product }}</p>
-        <a [href]="user.external_urls.spotify" target="_blank" rel="noopener">View on Spotify</a>
-      </div>
-    </div>
-  } @else {
-    <p>Loading your Spotify profile…</p>
-  }
-</section>
+    </section>
+
+    @if (profile(); as user) {
+      <app-generator-panel
+        [userId]="user.id"
+        [market]="user.country"
+        [selectedPlaylistId]="selectedPlaylistId()"
+        (playlistCreated)="onPlaylistCreated($event)"
+        (tracksAdded)="onTracksAdded()"
+      />
+    }
+  </main>
+</div>
