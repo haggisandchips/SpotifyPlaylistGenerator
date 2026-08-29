@@ -281,31 +281,33 @@
   transform: translateX(20px);
 }
 
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.slider-label {
+  flex: none;
+}
+
+.slider {
+  flex: 1;
+  max-width: 240px;
+  accent-color: #1db954;
+}
+
+.slider-value {
+  flex: none;
+  min-width: 1.5em;
+  text-align: right;
+  font-weight: 600;
+  color: #fff;
+}
+
 .error {
   color: #e22134;
   margin: 0;
-}
-
-.info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 0;
-  padding: 0.85rem 1.25rem;
-  background: rgba(29, 185, 84, 0.12);
-  border: 1px solid rgba(29, 185, 84, 0.4);
-  border-radius: 8px;
-  color: #d9f7e3;
-}
-
-.info-dismiss {
-  flex: none;
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
 }
 
 .artist-panels {
@@ -424,6 +426,7 @@
 .add-more-wrap {
   display: flex;
   justify-content: center;
+  gap: 0.75rem;
   margin-top: 1.25rem;
 }
 

@@ -126,11 +126,11 @@ export class GeneratorPanel {
   protected readonly furthestTabIndex = signal(0);
 
   protected readonly artistsInput = signal('');
+  // How many of an artist's top tracks to pull in initially, and per "Add More" click.
+  protected readonly songsPerArtist = signal(5);
   protected readonly isLookingUp = signal(false);
   protected readonly lookupError = signal<string | null>(null);
   protected readonly artistSlots = signal<ArtistSlot[] | null>(null);
-  protected readonly exhaustedSlotIds = signal<Set<string>>(new Set());
-  protected readonly infoMessage = signal<string | null>(null);
 
   // Hover/focus preview shown in the resolution (ambiguous-match) panels only. Top-track
   // lookups are cached per artist id for as long as we're on the Songs tab, so re-hovering
@@ -326,7 +326,7 @@ export class GeneratorPanel {
           status: 'resolved',
           artist: resolved,
           allTracks,
-          tracks: allTracks.slice(0, 5),
+          tracks: allTracks.slice(0, this.songsPerArtist()),
           rawSearchResults: [],
           searchError: null,
           needsInitialResolution: false,
@@ -489,19 +489,11 @@ export class GeneratorPanel {
         status: 'resolved',
         artist,
         allTracks,
-        tracks: allTracks.slice(0, 5),
+        tracks: allTracks.slice(0, this.songsPerArtist()),
         excludedTrackIds: new Set(),
         rawSearchResults: [],
         isSearching: false,
         needsInitialResolution: false,
-      });
-      this.exhaustedSlotIds.update((set) => {
-        if (!set.has(slotId)) {
-          return set;
-        }
-        const next = new Set(set);
-        next.delete(slotId);
-        return next;
       });
     } catch (err) {
       this.updateSlot(slotId, {
@@ -518,14 +510,19 @@ export class GeneratorPanel {
       this.searchDebounceTimers.delete(slotId);
     }
     this.artistSlots.update((slots) => (slots ?? []).filter((s) => s.id !== slotId));
-    this.exhaustedSlotIds.update((set) => {
-      if (!set.has(slotId)) {
-        return set;
-      }
-      const next = new Set(set);
-      next.delete(slotId);
-      return next;
-    });
+  }
+
+  // Top tracks not yet included in or excluded from a slot's selection — what's left in the
+  // ≤10-track pool Spotify gave us for this artist to draw more from.
+  protected remainingCount(slot: ArtistSlot): number {
+    const includedIds = new Set(slot.tracks.map((track) => track.id));
+    return slot.allTracks.filter((track) => !includedIds.has(track.id) && !slot.excludedTrackIds.has(track.id)).length;
+  }
+
+  // How many tracks the primary "Add N More" button would actually add — capped by what's
+  // left in the pool once fewer remain than the Songs Per Artist setting.
+  protected addMoreCount(slot: ArtistSlot): number {
+    return Math.min(this.songsPerArtist(), this.remainingCount(slot));
   }
 
   // Reopens search using whatever the user last typed into this slot's own search box,
@@ -555,20 +552,12 @@ export class GeneratorPanel {
     );
   }
 
-  addMoreTracks(slot: ArtistSlot): void {
+  addMoreTracks(slot: ArtistSlot, count: number): void {
     const includedIds = new Set(slot.tracks.map((track) => track.id));
     const pool = slot.allTracks.filter(
       (track) => !includedIds.has(track.id) && !slot.excludedTrackIds.has(track.id),
     );
-
-    if (pool.length === 0) {
-      this.exhaustedSlotIds.update((set) => new Set(set).add(slot.id));
-      this.infoMessage.set(`No more tracks are available for ${slot.artist?.name ?? slot.queryText}.`);
-      return;
-    }
-
-    const additional = pool.slice(0, 5);
-    this.infoMessage.set(null);
+    const additional = pool.slice(0, count);
     this.updateSlot(slot.id, { tracks: [...slot.tracks, ...additional] });
   }
 
@@ -651,9 +640,8 @@ export class GeneratorPanel {
     this.activeTab.set('playlists');
     this.furthestTabIndex.set(0);
     this.artistsInput.set('');
+    this.songsPerArtist.set(5);
     this.artistSlots.set(null);
-    this.exhaustedSlotIds.set(new Set());
-    this.infoMessage.set(null);
     this.playlistName.set('');
     this.playlistDescription.set('');
     this.isPrivate.set(true);

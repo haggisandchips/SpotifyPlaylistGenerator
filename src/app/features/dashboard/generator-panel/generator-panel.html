@@ -158,6 +158,22 @@
             <p class="required-hint">Enter at least one artist to continue.</p>
           }
 
+          <div class="slider-row">
+            <label class="switch-label slider-label" for="songs-per-artist">Songs Per Artist:</label>
+            <input
+              id="songs-per-artist"
+              type="range"
+              class="slider"
+              min="1"
+              max="10"
+              step="1"
+              title="How many of each artist's top tracks to pull in initially, and with each Add More click"
+              [value]="songsPerArtist()"
+              (input)="songsPerArtist.set($any($event.target).valueAsNumber)"
+            />
+            <span class="slider-value">{{ songsPerArtist() }}</span>
+          </div>
+
           <button
             type="button"
             class="btn btn-primary"
@@ -171,13 +187,6 @@
 
       @case ('songs') {
         <div class="step">
-          @if (infoMessage(); as msg) {
-            <p class="info">
-              <span>{{ msg }}</span>
-              <button type="button" class="info-dismiss" (click)="infoMessage.set(null)" aria-label="Dismiss">✕</button>
-            </p>
-          }
-
           <div class="artist-panels" #artistPanels>
             @for (slot of displaySlots(); track slot.id) {
               <div class="artist-panel" [attr.data-slot-id]="slot.id">
@@ -232,17 +241,28 @@
                     <p class="artist-placeholder">No tracks selected.</p>
                   }
 
-                  <div class="add-more-wrap">
-                    <button
-                      type="button"
-                      class="btn btn-secondary add-more-btn"
-                      [disabled]="exhaustedSlotIds().has(slot.id)"
-                      (click)="addMoreTracks(slot)"
-                      title="Add up to 5 more of this artist's top tracks"
-                    >
-                      Add More
-                    </button>
-                  </div>
+                  @if (addMoreCount(slot); as addMoreCount) {
+                    <div class="add-more-wrap">
+                      <button
+                        type="button"
+                        class="btn btn-secondary add-more-btn"
+                        (click)="addMoreTracks(slot, addMoreCount)"
+                        [title]="'Add ' + addMoreCount + ' more of this artist\'s top tracks'"
+                      >
+                        Add {{ addMoreCount }} More
+                      </button>
+                      @if (addMoreCount > 1) {
+                        <button
+                          type="button"
+                          class="btn btn-secondary add-more-btn"
+                          (click)="addMoreTracks(slot, 1)"
+                          title="Add just 1 more of this artist's top tracks"
+                        >
+                          Add 1 More
+                        </button>
+                      }
+                    </div>
+                  }
                 } @else {
                   <p class="search-hint">
                     We couldn't confidently match "{{ slot.queryText }}". Search below and click an artist's picture
