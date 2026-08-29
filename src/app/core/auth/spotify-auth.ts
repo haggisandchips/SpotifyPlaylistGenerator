@@ -8,6 +8,7 @@ const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 const CODE_VERIFIER_KEY = 'spotify_auth_code_verifier';
 const STATE_KEY = 'spotify_auth_state';
 const TOKENS_KEY = 'spotify_auth_tokens';
+const CUSTOM_CLIENT_ID_KEY = 'spotify_auth_custom_client_id';
 
 interface StoredTokens {
   accessToken: string;
@@ -23,10 +24,41 @@ interface TokenResponse {
   refresh_token?: string;
 }
 
+/** Thrown when a request to Spotify fails, carrying the HTTP status so callers can
+ *  distinguish a Development Mode access-denial (403) from other failures. */
+export class SpotifyAuthError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'SpotifyAuthError';
+  }
+}
+
 @Service()
 export class SpotifyAuth {
   private readonly tokens = signal<StoredTokens | null>(this.readStoredTokens());
   readonly isAuthenticated = signal(this.tokens() !== null);
+
+  /** The client ID to use: a user-supplied BYOC client ID if one is stored, otherwise the app default. */
+  getClientId(): string {
+    return localStorage.getItem(CUSTOM_CLIENT_ID_KEY) || environment.spotify.clientId;
+  }
+
+  getCustomClientId(): string | null {
+    return localStorage.getItem(CUSTOM_CLIENT_ID_KEY);
+  }
+
+  /** Stores a user-supplied Client ID for BYOC. Passing an empty/whitespace value reverts to the app default. */
+  setCustomClientId(clientId: string): void {
+    const trimmed = clientId.trim();
+    if (trimmed) {
+      localStorage.setItem(CUSTOM_CLIENT_ID_KEY, trimmed);
+    } else {
+      localStorage.removeItem(CUSTOM_CLIENT_ID_KEY);
+    }
+  }
 
   async login(): Promise<void> {
     if (!window.isSecureContext) {
@@ -46,7 +78,7 @@ export class SpotifyAuth {
 
     const params = new URLSearchParams({
       response_type: 'code',
-      client_id: environment.spotify.clientId,
+      client_id: this.getClientId(),
       scope: environment.spotify.scopes.join(' '),
       redirect_uri: environment.spotify.redirectUri,
       state,
@@ -85,13 +117,16 @@ export class SpotifyAuth {
         grant_type: 'authorization_code',
         code,
         redirect_uri: environment.spotify.redirectUri,
-        client_id: environment.spotify.clientId,
+        client_id: this.getClientId(),
         code_verifier: codeVerifier,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to exchange authorization code (${response.status})`);
+      throw new SpotifyAuthError(
+        `Failed to exchange authorization code (${response.status})`,
+        response.status,
+      );
     }
 
     this.storeTokenResponse(await response.json());
@@ -121,7 +156,7 @@ export class SpotifyAuth {
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
-        client_id: environment.spotify.clientId,
+        client_id: this.getClientId(),
       }),
     });
 

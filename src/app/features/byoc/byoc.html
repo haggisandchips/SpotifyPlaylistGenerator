@@ -1,0 +1,77 @@
+<section class="byoc">
+  <h1>Use your own Spotify app</h1>
+  <p class="lede">Spotify won't let your account sign in to this app right now.</p>
+
+  <ol class="steps">
+    <li>
+      Open the
+      <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer"
+        >Spotify Developer Dashboard</a
+      >
+      and log in with the same Spotify account you want to use here.
+    </li>
+    <li>Click <strong>Create app</strong>. Give it any name and description.</li>
+    <li>
+      Set <strong>Redirect URI</strong> to exactly:
+      <span class="redirect-uri-row">
+        <code class="redirect-uri">{{ redirectUri }}</code>
+        <button type="button" class="copy-btn" (click)="copyRedirectUri()">
+          {{ copied() ? 'Copied!' : 'Copy' }}
+        </button>
+      </span>
+    </li>
+    <li>Save the app, open its settings, and copy the <strong>Client ID</strong>.</li>
+    <li>Paste it below and sign in again.</li>
+  </ol>
+
+  <div class="field">
+    <label class="field-label" for="client-id">Client ID:</label>
+    <input
+      id="client-id"
+      type="text"
+      class="text-input"
+      placeholder="e.g. 73ba150d645b4d7d8acfb32f635b1a91"
+      autocomplete="off"
+      spellcheck="false"
+      [value]="clientId()"
+      (input)="clientId.set($any($event.target).value)"
+    />
+  </div>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <div class="actions">
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="isRedirecting()"
+      (click)="saveAndRetry()"
+    >
+      {{ isRedirecting() ? 'Redirecting to Spotify…' : 'Save and sign in' }}
+    </button>
+    @if (hasCustomClientId()) {
+      <button type="button" class="btn btn-secondary" (click)="useDefaultInstead()">
+        Remove and use default
+      </button>
+    }
+  </div>
+
+  <div class="why">
+    <h2 class="why-heading">Why is this happening?</h2>
+    <p>
+      This app is registered with Spotify in "Development Mode", which caps it at 5
+      manually-approved Spotify accounts. That's a Spotify platform restriction, not a choice made
+      by this project.
+    </p>
+    <p>
+      Small, non-commercial hobby apps like this one aren't eligible to move out of Development
+      Mode, so this is the only way for anyone outside that allowlist to use it.
+    </p>
+    <p>
+      Creating your own free Spotify app takes a couple of minutes, and its Client ID is stored only
+      in your browser.
+    </p>
+  </div>
+</section>

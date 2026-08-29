@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { SpotifyAuth } from '../../core/auth/spotify-auth';
+import { SpotifyAuth, SpotifyAuthError } from '../../core/auth/spotify-auth';
 
 @Component({
   imports: [],
@@ -19,7 +19,13 @@ export class Callback implements OnInit {
       await this.auth.handleRedirectCallback(new URLSearchParams(window.location.search));
       await this.router.navigateByUrl('/dashboard');
     } catch (err) {
-      this.errorMessage.set(err instanceof Error ? err.message : 'Something went wrong signing in.');
+      if (err instanceof SpotifyAuthError && err.status === 403) {
+        await this.router.navigateByUrl('/byoc');
+        return;
+      }
+      this.errorMessage.set(
+        err instanceof Error ? err.message : 'Something went wrong signing in.',
+      );
     }
   }
 

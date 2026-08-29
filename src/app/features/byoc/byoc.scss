@@ -1,0 +1,112 @@
+.byoc {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.lede {
+  color: #b3b3b3;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.redirect-uri-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.redirect-uri {
+  padding: 0.35rem 0.5rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  background: transparent;
+  color: #fff;
+  border: 1px solid #535353;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.copy-btn:hover,
+.copy-btn:focus-visible {
+  border-color: #1db954;
+  outline: none;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-weight: 600;
+}
+
+.text-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: #1db954;
+}
+
+.error {
+  color: #e22134;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.why {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #333;
+  color: #b3b3b3;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.why-heading {
+  font-size: 1rem;
+  color: #fff;
+  margin: 0;
+}
+
+.why p {
+  margin: 0;
+}

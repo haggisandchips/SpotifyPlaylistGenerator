@@ -1,5 +1,5 @@
 import { Service, inject, signal } from '@angular/core';
-import { SpotifyAuth } from '../auth/spotify-auth';
+import { SpotifyAuth, SpotifyAuthError } from '../auth/spotify-auth';
 
 const API_BASE = 'https://api.spotify.com/v1';
 const MAX_RATE_LIMIT_RETRIES = 3;
@@ -89,7 +89,9 @@ export class SpotifyApi {
 
   async getArtistTopTracks(artistId: string, market: string): Promise<SpotifyTrack[]> {
     const params = new URLSearchParams({ market });
-    const result = await this.request<SpotifyTopTracksResponse>(`/artists/${artistId}/top-tracks?${params}`);
+    const result = await this.request<SpotifyTopTracksResponse>(
+      `/artists/${artistId}/top-tracks?${params}`,
+    );
     return result.tracks;
   }
 
@@ -117,7 +119,11 @@ export class SpotifyApi {
     }
   }
 
-  private async request<T>(path: string, init: RequestInit = {}, retriesLeft = MAX_RATE_LIMIT_RETRIES): Promise<T> {
+  private async request<T>(
+    path: string,
+    init: RequestInit = {},
+    retriesLeft = MAX_RATE_LIMIT_RETRIES,
+  ): Promise<T> {
     const accessToken = await this.auth.getAccessToken();
     if (!accessToken) {
       throw new Error('Not authenticated with Spotify.');
@@ -134,12 +140,18 @@ export class SpotifyApi {
     if (response.status === 429 && retriesLeft > 0) {
       this.rateLimitHits.update((count) => count + 1);
       const retryAfterSeconds = Number(response.headers.get('Retry-After'));
-      await delay((Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0 ? retryAfterSeconds : 1) * 1000);
+      await delay(
+        (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0 ? retryAfterSeconds : 1) *
+          1000,
+      );
       return this.request<T>(path, init, retriesLeft - 1);
     }
 
     if (!response.ok) {
-      throw new Error(`Spotify API request to ${path} failed (${response.status})`);
+      throw new SpotifyAuthError(
+        `Spotify API request to ${path} failed (${response.status})`,
+        response.status,
+      );
     }
 
     if (response.status === 204) {

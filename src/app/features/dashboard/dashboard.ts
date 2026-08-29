@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { SpotifyAuth } from '../../core/auth/spotify-auth';
+import { SpotifyAuth, SpotifyAuthError } from '../../core/auth/spotify-auth';
 import { SpotifyApi, SpotifyPlaylist, SpotifyUserProfile } from '../../core/spotify/spotify-api';
 import { GeneratorPanel } from './generator-panel/generator-panel';
 
@@ -29,13 +29,23 @@ export class Dashboard implements OnInit {
     try {
       this.profile.set(await profilePromise);
     } catch (err) {
-      this.errorMessage.set(err instanceof Error ? err.message : 'Failed to load your Spotify profile.');
+      if (err instanceof SpotifyAuthError && err.status === 403) {
+        playlistsPromise.catch(() => {});
+        this.auth.logout();
+        await this.router.navigateByUrl('/byoc');
+        return;
+      }
+      this.errorMessage.set(
+        err instanceof Error ? err.message : 'Failed to load your Spotify profile.',
+      );
     }
 
     try {
       this.playlists.set(await playlistsPromise);
     } catch (err) {
-      this.playlistsError.set(err instanceof Error ? err.message : 'Failed to load your playlists.');
+      this.playlistsError.set(
+        err instanceof Error ? err.message : 'Failed to load your playlists.',
+      );
     }
   }
 
@@ -57,7 +67,9 @@ export class Dashboard implements OnInit {
     try {
       this.playlists.set(await this.spotifyApi.getCurrentUserPlaylists());
     } catch (err) {
-      this.playlistsError.set(err instanceof Error ? err.message : 'Failed to load your playlists.');
+      this.playlistsError.set(
+        err instanceof Error ? err.message : 'Failed to load your playlists.',
+      );
       return;
     }
 
@@ -68,7 +80,9 @@ export class Dashboard implements OnInit {
     try {
       this.playlists.set(await this.spotifyApi.getCurrentUserPlaylists());
     } catch (err) {
-      this.playlistsError.set(err instanceof Error ? err.message : 'Failed to load your playlists.');
+      this.playlistsError.set(
+        err instanceof Error ? err.message : 'Failed to load your playlists.',
+      );
       return;
     }
 
