@@ -167,6 +167,11 @@ export class GeneratorPanel {
     return { processed: slots.filter((slot) => slot.status !== 'loading').length, total: slots.length };
   });
   protected readonly hasPlaylistName = computed(() => this.playlistName().trim().length > 0);
+  // Combined length of every currently-selected track across all artists, shown as a
+  // standout summary at the bottom of the Songs step.
+  protected readonly totalDurationMs = computed(() =>
+    (this.artistSlots() ?? []).reduce((sum, slot) => sum + this.slotDurationMs(slot), 0),
+  );
 
   // Render order for the Songs tab: slots the initial automatic lookup couldn't confirm are
   // pushed to the bottom (out of the way while they're being resolved) but keep their
@@ -453,6 +458,41 @@ export class GeneratorPanel {
       return `${Math.round(count / 1_000)}K`;
     }
     return count.toLocaleString();
+  }
+
+  // Sum of the selected tracks' lengths for one artist panel.
+  protected slotDurationMs(slot: ArtistSlot): number {
+    return slot.tracks.reduce((sum, track) => sum + track.duration_ms, 0);
+  }
+
+  // Per-artist panel subtotal — compact clock form, always hh:mm:ss.
+  protected formatDurationClock(ms: number): string {
+    const totalSeconds = Math.round(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+
+  // Bottom-of-wizard grand total — spelled out in words rather than a clock, so it reads as
+  // a headline figure rather than another timestamp.
+  protected formatDurationWords(ms: number): string {
+    const totalSeconds = Math.round(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts: string[] = [];
+    if (hours > 0) {
+      parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+    }
+    if (minutes > 0) {
+      parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+    }
+    if (seconds > 0 || parts.length === 0) {
+      parts.push(`${seconds} second${seconds === 1 ? '' : 's'}`);
+    }
+    return parts.join(', ');
   }
 
   private setArtistPreview(artistId: string, state: ArtistPreviewState): void {

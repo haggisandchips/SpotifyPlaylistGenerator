@@ -579,3 +579,35 @@
   color: #727272;
   font-style: italic;
 }
+
+.artist-duration {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1db954;
+  text-align: right;
+}
+
+.total-duration {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0.2), rgba(29, 185, 84, 0.05));
+  border: 1px solid rgba(29, 185, 84, 0.45);
+  border-radius: 10px;
+}
+
+.total-duration-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.total-duration-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1db954;
+}

@@ -237,6 +237,7 @@
                         </li>
                       }
                     </ul>
+                    <p class="artist-duration">Total: {{ formatDurationClock(slotDurationMs(slot)) }}</p>
                   } @else {
                     <p class="artist-placeholder">No tracks selected.</p>
                   }
@@ -384,6 +385,13 @@
             <p class="required-hint">Resolve or remove every artist to continue.</p>
           } @else if (!hasAnyTracks()) {
             <p class="required-hint">Select at least one track to continue.</p>
+          }
+
+          @if (hasAnyTracks()) {
+            <div class="total-duration">
+              <span class="total-duration-label">Total playlist time</span>
+              <span class="total-duration-value">{{ formatDurationWords(totalDurationMs()) }}</span>
+            </div>
           }
 
           @if (selectedPlaylistId(); as playlistId) {
