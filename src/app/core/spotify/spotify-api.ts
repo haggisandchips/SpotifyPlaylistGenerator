@@ -36,6 +36,7 @@ export interface SpotifyArtist {
   images: SpotifyImage[] | null;
   genres: string[];
   popularity: number;
+  followers: { total: number };
 }
 
 export interface SpotifyTrack {

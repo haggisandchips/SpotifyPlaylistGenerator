@@ -385,6 +385,18 @@ export class GeneratorPanel {
     }
   }
 
+  // Below 10k, followers show the exact count; above that the precision isn't meaningful
+  // to a user browsing artist candidates, so switch to a rounded K/M form (e.g. 4.2M).
+  protected formatFollowers(count: number): string {
+    if (count >= 1_000_000) {
+      return `${(count / 1_000_000).toFixed(1)}M`;
+    }
+    if (count >= 10_000) {
+      return `${Math.round(count / 1_000)}K`;
+    }
+    return count.toLocaleString();
+  }
+
   private setArtistPreview(artistId: string, state: ArtistPreviewState): void {
     this.artistPreviews.update((map) => {
       const next = new Map(map);

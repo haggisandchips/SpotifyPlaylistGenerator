@@ -102,7 +102,7 @@
                       <span class="artist-name">{{ slot.artist!.name }}</span>
                       <span class="artist-meta">
                         {{ slot.artist!.genres.length ? slot.artist!.genres.join(', ') : 'No genres listed' }}
-                        · Popularity: {{ slot.artist!.popularity }}/100
+                        · {{ formatFollowers(slot.artist!.followers.total) }} followers
                       </span>
                     </div>
                     <button
@@ -230,7 +230,9 @@
                               <p class="artist-preview-meta">
                                 {{ hovered.candidate.genres.length ? hovered.candidate.genres.join(', ') : 'No genres listed' }}
                               </p>
-                              <p class="artist-preview-meta">Popularity: {{ hovered.candidate.popularity }}/100</p>
+                              <p class="artist-preview-meta">
+                                {{ formatFollowers(hovered.candidate.followers.total) }} followers
+                              </p>
 
                               @if (artistPreviews().get(hovered.candidate.id); as preview) {
                                 @if (preview.isLoading) {
