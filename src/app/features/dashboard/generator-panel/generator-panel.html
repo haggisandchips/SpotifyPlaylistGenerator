@@ -98,7 +98,13 @@
                     } @else {
                       <div class="artist-avatar artist-avatar-placeholder"></div>
                     }
-                    <span class="artist-name">{{ slot.artist!.name }}</span>
+                    <div class="artist-header-text">
+                      <span class="artist-name">{{ slot.artist!.name }}</span>
+                      <span class="artist-meta">
+                        {{ slot.artist!.genres.length ? slot.artist!.genres.join(', ') : 'No genres listed' }}
+                        · Popularity: {{ slot.artist!.popularity }}/100
+                      </span>
+                    </div>
                     <button
                       type="button"
                       class="change-btn"

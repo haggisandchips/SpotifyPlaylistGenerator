@@ -218,11 +218,22 @@
   }
 }
 
-.artist-name {
+.artist-header-text {
   flex: 1;
+  min-width: 0;
+}
+
+.artist-name {
+  display: block;
   font-size: 1.15rem;
   font-weight: 700;
   color: #fff;
+}
+
+.artist-meta {
+  display: block;
+  font-size: 0.85rem;
+  color: #b3b3b3;
 }
 
 .change-btn {
