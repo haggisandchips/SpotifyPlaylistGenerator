@@ -59,8 +59,9 @@
     }
   </div>
 
-  <div class="stage-info">
-    @switch (activeTab()) {
+  <div class="sticky-header">
+    <div class="stage-info">
+      @switch (activeTab()) {
       @case ('playlists') {
         <p>
           <span class="stage-info-icon" aria-hidden="true">ℹ</span>
@@ -96,7 +97,7 @@
               title="Jump to the first artist that needs confirming"
               aria-label="Jump to the first artist that needs confirming"
             >
-              Jump ↓
+              Jump <span class="jump-btn-arrow" aria-hidden="true">↓</span>
             </button>
           </p>
         } @else {
@@ -118,6 +119,30 @@
           <span class="stage-info-text">Name your playlist, add an optional description, choose whether it's private, and generate it.</span>
         </p>
       }
+      }
+    </div>
+
+    @if (activeTab() === 'mix') {
+      <div class="mix-toolbar">
+        <button
+          type="button"
+          class="btn btn-secondary shuffle-btn"
+          (click)="shuffleMix()"
+          title="Shuffle the order of every selected track"
+        >
+          <span class="mix-toolbar-icon" aria-hidden="true">⇄</span> Shuffle
+        </button>
+        @if (mixOrder()) {
+          <button
+            type="button"
+            class="btn btn-secondary reset-order-btn"
+            (click)="resetMixOrder()"
+            title="Put every track back in its original order"
+          >
+            <span class="mix-toolbar-icon" aria-hidden="true">↺</span> Reset Order
+          </button>
+        }
+      </div>
     }
   </div>
 
@@ -444,27 +469,6 @@
 
       @case ('mix') {
         <div class="step">
-          <div class="mix-toolbar">
-            <button
-              type="button"
-              class="btn btn-secondary shuffle-btn"
-              (click)="shuffleMix()"
-              title="Shuffle the order of every selected track"
-            >
-              🔀 Shuffle
-            </button>
-            @if (mixOrder()) {
-              <button
-                type="button"
-                class="btn btn-secondary reset-order-btn"
-                (click)="resetMixOrder()"
-                title="Put every track back in its original order"
-              >
-                Reset Order
-              </button>
-            }
-          </div>
-
           <div class="mix-list" cdkDropList (cdkDropListDropped)="onMixDrop($event)">
             @for (item of mixedTracks(); track item.key) {
               <div class="mix-item" cdkDrag>

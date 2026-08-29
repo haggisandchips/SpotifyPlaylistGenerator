@@ -41,10 +41,17 @@
   gap: 1rem;
 }
 
-.stage-info {
+// Wraps .stage-info (and, on the Mix It Up tab, .mix-toolbar) as a single sticky unit with
+// its own opaque background, so there's no gap between the two panels for scrolled content
+// to show through — the stickiness lives here rather than on each panel individually.
+.sticky-header {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: #121212;
+}
+
+.stage-info {
   margin: 0 0 1.5rem;
   padding: 0.75rem 1.1rem;
   background:
@@ -67,6 +74,7 @@
   margin: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -99,6 +107,14 @@
 
 .jump-btn:hover {
   background: #1ed760;
+}
+
+// Scales the arrow up without affecting the button's own layout size — transform doesn't
+// participate in box sizing/line-height the way a bigger font-size on the button would.
+.jump-btn-arrow {
+  display: inline-block;
+  margin-left: 0.35rem;
+  transform: scale(1.4);
 }
 
 .playlist-grid {
@@ -640,10 +656,18 @@
   color: #1db954;
 }
 
+// Sits inside .sticky-header alongside .stage-info on the Mix It Up tab, so it rides along
+// as part of that single sticky block with no gap for scrolled content to show through.
 .mix-toolbar {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid #282828;
+}
+
+.mix-toolbar-icon {
+  color: #1db954;
+  margin-right: 0.35rem;
 }
 
 .mix-list {
