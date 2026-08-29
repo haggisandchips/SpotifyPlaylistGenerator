@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { SpotifyAuth } from '../../core/auth/spotify-auth';
 import { SpotifyApi, SpotifyPlaylist, SpotifyUserProfile } from '../../core/spotify/spotify-api';
@@ -15,13 +15,12 @@ export class Dashboard implements OnInit {
   private readonly spotifyApi = inject(SpotifyApi);
   private readonly router = inject(Router);
 
-  private readonly carouselTrack = viewChild<ElementRef<HTMLElement>>('carouselTrack');
-
   protected readonly profile = signal<SpotifyUserProfile | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly playlists = signal<SpotifyPlaylist[] | null>(null);
   protected readonly playlistsError = signal<string | null>(null);
   protected readonly selectedPlaylistId = signal<string | null>(null);
+  protected readonly highlightPlaylistId = signal<string | null>(null);
 
   async ngOnInit(): Promise<void> {
     const profilePromise = this.spotifyApi.getCurrentUser();
@@ -45,12 +44,13 @@ export class Dashboard implements OnInit {
     this.router.navigateByUrl('/');
   }
 
-  scrollCarousel(direction: 1 | -1): void {
-    this.carouselTrack()?.nativeElement.scrollBy({ left: direction * 320, behavior: 'smooth' });
+  onPlaylistSelected(id: string | null): void {
+    this.selectedPlaylistId.set(id);
+    this.highlightPlaylistId.set(null);
   }
 
-  selectPlaylist(id: string): void {
-    this.selectedPlaylistId.set(this.selectedPlaylistId() === id ? null : id);
+  onWizardReset(): void {
+    this.selectedPlaylistId.set(null);
   }
 
   async onPlaylistCreated(playlistId: string): Promise<void> {
@@ -61,33 +61,17 @@ export class Dashboard implements OnInit {
       return;
     }
 
-    this.selectedPlaylistId.set(playlistId);
-
-    // Defer until the carousel has re-rendered with the refreshed list.
-    setTimeout(() => this.scrollToPlaylist(playlistId), 0);
+    this.highlightPlaylistId.set(playlistId);
   }
 
-  async onTracksAdded(): Promise<void> {
+  async onTracksAdded(playlistId: string): Promise<void> {
     try {
       this.playlists.set(await this.spotifyApi.getCurrentUserPlaylists());
     } catch (err) {
       this.playlistsError.set(err instanceof Error ? err.message : 'Failed to load your playlists.');
-    }
-  }
-
-  private scrollToPlaylist(playlistId: string): void {
-    const items = this.playlists();
-    const track = this.carouselTrack()?.nativeElement;
-    if (!items || !track) {
       return;
     }
 
-    const index = items.findIndex((playlist) => playlist.id === playlistId);
-    if (index === -1) {
-      return;
-    }
-
-    const card = track.children[index] as HTMLElement | undefined;
-    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    this.highlightPlaylistId.set(playlistId);
   }
 }

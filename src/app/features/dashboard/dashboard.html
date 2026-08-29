@@ -26,61 +26,18 @@
       <p>Loading your Spotify profile…</p>
     }
 
-    <section class="playlists">
-      <h2>Your playlists</h2>
-
-      @if (playlistsError()) {
-        <p class="error">{{ playlistsError() }}</p>
-      } @else if (playlists(); as items) {
-        @if (items.length) {
-          <div class="carousel">
-            <button type="button" class="carousel-arrow" (click)="scrollCarousel(-1)" aria-label="Scroll left">
-              ‹
-            </button>
-
-            <div class="carousel-track" #carouselTrack>
-              @for (playlist of items; track playlist.id) {
-                <button
-                  type="button"
-                  class="playlist-card"
-                  [class.selected]="selectedPlaylistId() === playlist.id"
-                  [attr.aria-pressed]="selectedPlaylistId() === playlist.id"
-                  (click)="selectPlaylist(playlist.id)"
-                >
-                  <span class="playlist-image-wrap">
-                    @if (playlist.images?.length) {
-                      <img [src]="playlist.images[0].url" [alt]="playlist.name" class="playlist-image" />
-                    } @else {
-                      <span class="playlist-image playlist-image-placeholder"></span>
-                    }
-                    @if (selectedPlaylistId() === playlist.id) {
-                      <span class="playlist-check" aria-hidden="true">✓</span>
-                    }
-                  </span>
-                  <span class="playlist-name">{{ playlist.name }}</span>
-                </button>
-              }
-            </div>
-
-            <button type="button" class="carousel-arrow" (click)="scrollCarousel(1)" aria-label="Scroll right">
-              ›
-            </button>
-          </div>
-        } @else {
-          <p>You don't have any playlists yet.</p>
-        }
-      } @else {
-        <p>Loading your playlists…</p>
-      }
-    </section>
-
     @if (profile(); as user) {
       <app-generator-panel
         [userId]="user.id"
         [market]="user.country"
         [selectedPlaylistId]="selectedPlaylistId()"
+        [playlists]="playlists()"
+        [playlistsError]="playlistsError()"
+        [highlightPlaylistId]="highlightPlaylistId()"
+        (playlistSelected)="onPlaylistSelected($event)"
+        (wizardReset)="onWizardReset()"
         (playlistCreated)="onPlaylistCreated($event)"
-        (tracksAdded)="onTracksAdded()"
+        (tracksAdded)="onTracksAdded($event)"
       />
     }
   </main>

@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { SpotifyApi, SpotifyArtist, SpotifyTrack } from '../../../core/spotify/spotify-api';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { SpotifyApi, SpotifyArtist, SpotifyPlaylist, SpotifyTrack } from '../../../core/spotify/spotify-api';
 
 const SEARCH_DEBOUNCE_MS = 200;
 // Each artist lookup fires 1-2 Spotify requests; looking up a big list (e.g. a festival
@@ -87,9 +87,9 @@ interface HoveredCandidate {
   candidate: SpotifyArtist;
 }
 
-type GeneratorTab = 'artists' | 'songs' | 'generate';
+type GeneratorTab = 'playlists' | 'artists' | 'songs' | 'generate';
 
-const TAB_ORDER: GeneratorTab[] = ['artists', 'songs', 'generate'];
+const TAB_ORDER: GeneratorTab[] = ['playlists', 'artists', 'songs', 'generate'];
 
 @Component({
   imports: [],
@@ -104,11 +104,22 @@ export class GeneratorPanel {
   readonly userId = input.required<string>();
   readonly market = input<string>('US');
   readonly selectedPlaylistId = input<string | null>(null);
+  readonly playlists = input<SpotifyPlaylist[] | null>(null);
+  readonly playlistsError = input<string | null>(null);
+  // Id of a playlist just created/edited elsewhere, so the Playlists tab can scroll it into
+  // view once the wizard resets back onto that tab.
+  readonly highlightPlaylistId = input<string | null>(null);
 
+  private readonly playlistGrid = viewChild<ElementRef<HTMLElement>>('playlistGrid');
+
+  readonly playlistSelected = output<string | null>();
   readonly playlistCreated = output<string>();
-  readonly tracksAdded = output<void>();
+  readonly tracksAdded = output<string>();
+  // Fired whenever the wizard returns to its default state (after a successful generate/add),
+  // so the parent can drop any playlist selection and show the Generate tab again.
+  readonly wizardReset = output<void>();
 
-  protected readonly activeTab = signal<GeneratorTab>('artists');
+  protected readonly activeTab = signal<GeneratorTab>('playlists');
   // Tracks how far the wizard has progressed so completed tabs can be clicked to go back;
   // tabs ahead of this stay locked until reached normally via Next.
   protected readonly furthestTabIndex = signal(0);
@@ -184,6 +195,22 @@ export class GeneratorPanel {
         this.artistPreviews.set(new Map());
       }
     });
+
+    // Scroll a just-created/edited playlist into view once its tile is actually in the DOM
+    // (the Playlists tab is active and the refreshed list has rendered).
+    effect(() => {
+      const id = this.highlightPlaylistId();
+      const onPlaylistsTab = this.activeTab() === 'playlists';
+      this.playlists();
+      if (!id || !onPlaylistsTab) {
+        return;
+      }
+      queueMicrotask(() => {
+        const grid = this.playlistGrid()?.nativeElement;
+        const target = grid?.querySelector<HTMLElement>(`[data-playlist-id="${id}"]`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
   }
 
   protected isTabReachable(tab: GeneratorTab): boolean {
@@ -194,6 +221,16 @@ export class GeneratorPanel {
     if (this.isTabReachable(tab)) {
       this.activeTab.set(tab);
     }
+  }
+
+  selectExistingPlaylist(playlistId: string): void {
+    this.playlistSelected.emit(playlistId);
+    this.activeTab.set('artists');
+  }
+
+  startNewPlaylist(): void {
+    this.playlistSelected.emit(null);
+    this.activeTab.set('artists');
   }
 
   async lookupArtists(): Promise<void> {
@@ -569,7 +606,7 @@ export class GeneratorPanel {
         await this.spotifyApi.addTracksToPlaylist(playlistId, uris);
       }
 
-      this.tracksAdded.emit();
+      this.tracksAdded.emit(playlistId);
       this.resetWizard();
     } catch (err) {
       this.addError.set(err instanceof Error ? err.message : 'Failed to add songs to the playlist.');
@@ -588,7 +625,8 @@ export class GeneratorPanel {
     }
     this.searchDebounceTimers.clear();
 
-    this.activeTab.set('artists');
+    this.wizardReset.emit();
+    this.activeTab.set('playlists');
     this.furthestTabIndex.set(0);
     this.artistsInput.set('');
     this.artistSlots.set(null);

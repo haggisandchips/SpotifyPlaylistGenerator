@@ -41,6 +41,92 @@
   gap: 1rem;
 }
 
+.playlist-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 1rem;
+}
+
+.playlist-card {
+  flex: none;
+  width: 160px;
+  display: block;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.playlist-image-wrap {
+  position: relative;
+  display: block;
+}
+
+.playlist-image {
+  display: block;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #282828;
+}
+
+.playlist-image-placeholder {
+  display: block;
+}
+
+.playlist-name {
+  display: block;
+  margin: 0.5rem 0 0.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.new-playlist-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  background: #1db954;
+}
+
+.new-playlist-cross {
+  position: relative;
+  width: 75%;
+  height: 75%;
+}
+
+.new-playlist-cross::before,
+.new-playlist-cross::after {
+  content: '';
+  position: absolute;
+  background: #000;
+  border-radius: 4px;
+}
+
+.new-playlist-cross::before {
+  top: 0;
+  bottom: 0;
+  left: 42%;
+  right: 42%;
+}
+
+.new-playlist-cross::after {
+  left: 0;
+  right: 0;
+  top: 42%;
+  bottom: 42%;
+}
+
 .field-label {
   display: block;
   margin: 0 0 0.4rem;

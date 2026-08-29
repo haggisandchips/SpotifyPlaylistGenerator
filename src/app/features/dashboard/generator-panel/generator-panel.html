@@ -4,6 +4,17 @@
       type="button"
       class="tab"
       role="tab"
+      [class.active]="activeTab() === 'playlists'"
+      [attr.aria-selected]="activeTab() === 'playlists'"
+      [disabled]="!isTabReachable('playlists')"
+      (click)="goToTab('playlists')"
+    >
+      Playlists
+    </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
       [class.active]="activeTab() === 'artists'"
       [attr.aria-selected]="activeTab() === 'artists'"
       [disabled]="!isTabReachable('artists')"
@@ -39,6 +50,49 @@
 
   <div class="tab-panel">
     @switch (activeTab()) {
+      @case ('playlists') {
+        <div class="step">
+          @if (playlistsError()) {
+            <p class="error">{{ playlistsError() }}</p>
+          } @else if (playlists(); as items) {
+            <div class="playlist-grid" #playlistGrid>
+              <button
+                type="button"
+                class="playlist-card new-playlist-card"
+                (click)="startNewPlaylist()"
+                title="Start a new playlist"
+              >
+                <span class="new-playlist-tile">
+                  <span class="new-playlist-cross" aria-hidden="true"></span>
+                </span>
+                <span class="playlist-name">New playlist</span>
+              </button>
+
+              @for (playlist of items; track playlist.id) {
+                <button
+                  type="button"
+                  class="playlist-card"
+                  [attr.data-playlist-id]="playlist.id"
+                  (click)="selectExistingPlaylist(playlist.id)"
+                  [title]="'Add songs to ' + playlist.name"
+                >
+                  <span class="playlist-image-wrap">
+                    @if (playlist.images?.length) {
+                      <img [src]="playlist.images[0].url" [alt]="playlist.name" class="playlist-image" />
+                    } @else {
+                      <span class="playlist-image playlist-image-placeholder"></span>
+                    }
+                  </span>
+                  <span class="playlist-name">{{ playlist.name }}</span>
+                </button>
+              }
+            </div>
+          } @else {
+            <p>Loading your playlists…</p>
+          }
+        </div>
+      }
+
       @case ('artists') {
         <div class="step">
           <label class="field-label required" for="artists-input">Artists:</label>
