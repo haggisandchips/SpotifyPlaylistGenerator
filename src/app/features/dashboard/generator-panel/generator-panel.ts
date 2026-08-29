@@ -69,6 +69,10 @@ interface ArtistSlot {
   isSearching: boolean;
   searchError: string | null;
   fuzzyMatching: boolean;
+  // True only while a slot is searching because the initial automatic lookup couldn't
+  // confirm a match — used to push it to the bottom of the list on that first attempt. A
+  // slot the user later sends back to searching via "Change" keeps its place instead.
+  needsInitialResolution: boolean;
 }
 
 interface ArtistPreviewState {
@@ -141,16 +145,17 @@ export class GeneratorPanel {
   );
   protected readonly hasPlaylistName = computed(() => this.playlistName().trim().length > 0);
 
-  // Render order for the Songs tab: slots that still need the user to pick an artist are
+  // Render order for the Songs tab: slots the initial automatic lookup couldn't confirm are
   // pushed to the bottom (out of the way while they're being resolved) but keep their
   // relative order among themselves; everything else keeps its original list position, so a
-  // slot lands right back where it was as soon as it's resolved.
+  // slot lands right back where it was as soon as it's resolved. A slot the user sends back
+  // to searching via "Change" is excluded from this regrouping and stays put.
   protected readonly displaySlots = computed(() => {
     const slots = this.artistSlots() ?? [];
     const inPlace: ArtistSlot[] = [];
     const needsResolution: ArtistSlot[] = [];
     for (const slot of slots) {
-      (slot.status === 'searching' ? needsResolution : inPlace).push(slot);
+      (slot.status === 'searching' && slot.needsInitialResolution ? needsResolution : inPlace).push(slot);
     }
     return [...inPlace, ...needsResolution];
   });
@@ -218,6 +223,7 @@ export class GeneratorPanel {
       isSearching: false,
       searchError: null,
       fuzzyMatching: false,
+      needsInitialResolution: false,
     }));
     this.artistSlots.set(placeholders);
     this.activeTab.set('songs');
@@ -274,6 +280,7 @@ export class GeneratorPanel {
           tracks: allTracks.slice(0, 5),
           rawSearchResults: [],
           searchError: null,
+          needsInitialResolution: false,
         };
       }
 
@@ -288,6 +295,7 @@ export class GeneratorPanel {
         rawSearchResults: candidates,
         searchError: null,
         fuzzyMatching: strictCandidates.length === 0,
+        needsInitialResolution: true,
       };
     } catch {
       return {
@@ -295,6 +303,7 @@ export class GeneratorPanel {
         status: 'searching',
         rawSearchResults: [],
         searchError: 'Failed to search for this artist.',
+        needsInitialResolution: true,
       };
     }
   }
@@ -435,6 +444,7 @@ export class GeneratorPanel {
         excludedTrackIds: new Set(),
         rawSearchResults: [],
         isSearching: false,
+        needsInitialResolution: false,
       });
       this.exhaustedSlotIds.update((set) => {
         if (!set.has(slotId)) {
@@ -469,11 +479,13 @@ export class GeneratorPanel {
     });
   }
 
+  // Reopens search using whatever the user last typed into this slot's own search box,
+  // never the name of the artist they ended up selecting — those can differ (e.g. typing
+  // "mega" then picking the wrong "Meghan Thee Stallion" result should reopen to "mega",
+  // not to her name).
   changeArtist(slot: ArtistSlot): void {
-    const prefill = slot.artist?.name ?? slot.queryText;
     this.updateSlot(slot.id, {
       status: 'searching',
-      queryText: prefill,
       rawSearchResults: [],
       isSearching: false,
       searchError: null,
