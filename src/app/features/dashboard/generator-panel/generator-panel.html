@@ -62,20 +62,28 @@
   <div class="stage-info">
     @switch (activeTab()) {
       @case ('playlists') {
-        <p><span class="stage-info-text">Pick a playlist to add songs to, or start a new one.</span></p>
+        <p>
+          <span class="stage-info-icon" aria-hidden="true">ℹ</span>
+          <span class="stage-info-text">Pick a playlist to add songs to, or start a new one.</span>
+        </p>
       }
       @case ('artists') {
-        <p><span class="stage-info-text">List the artists you want, one per line, then continue.</span></p>
+        <p>
+          <span class="stage-info-icon" aria-hidden="true">ℹ</span>
+          <span class="stage-info-text">List the artists you want, one per line, then continue.</span>
+        </p>
       }
       @case ('songs') {
         @if (isLookingUp()) {
           <p>
+            <span class="stage-info-icon" aria-hidden="true">ℹ</span>
             <span class="stage-info-text">
               Looking up artists and their top tracks — {{ lookupProgress().processed }}/{{ lookupProgress().total }} done.
             </span>
           </p>
         } @else if (unresolvedSlots().length; as count) {
           <p>
+            <span class="stage-info-icon" aria-hidden="true">ℹ</span>
             <span class="stage-info-text">
               {{ count }} artist{{ count === 1 ? '' : 's' }} couldn't be matched and
               {{ count === 1 ? "is" : "are" }} now at the bottom — confirm
@@ -88,18 +96,27 @@
               title="Jump to the first artist that needs confirming"
               aria-label="Jump to the first artist that needs confirming"
             >
-              ↓
+              Jump ↓
             </button>
           </p>
         } @else {
-          <p><span class="stage-info-text">Review each artist's tracks below, remove any you don't want, then continue.</span></p>
+          <p>
+            <span class="stage-info-icon" aria-hidden="true">ℹ</span>
+            <span class="stage-info-text">Review each artist's tracks below, remove any you don't want, then continue.</span>
+          </p>
         }
       }
       @case ('mix') {
-        <p><span class="stage-info-text">Drag tracks by their handle to reorder the playlist, or shuffle everything at once.</span></p>
+        <p>
+          <span class="stage-info-icon" aria-hidden="true">ℹ</span>
+          <span class="stage-info-text">Drag tracks by their handle to reorder the playlist, or shuffle everything at once.</span>
+        </p>
       }
       @case ('generate') {
-        <p><span class="stage-info-text">Name your playlist, add an optional description, choose whether it's private, and generate it.</span></p>
+        <p>
+          <span class="stage-info-icon" aria-hidden="true">ℹ</span>
+          <span class="stage-info-text">Name your playlist, add an optional description, choose whether it's private, and generate it.</span>
+        </p>
       }
     }
   </div>
@@ -154,6 +171,7 @@
           <label class="field-label required" for="artists-input">Artists:</label>
           <textarea
             id="artists-input"
+            #artistsInputEl
             class="artists-textarea"
             rows="6"
             placeholder="One artist per line…"
@@ -395,29 +413,31 @@
             }
           </div>
 
-          @if (!allArtistsResolved()) {
-            <p class="required-hint">Resolve or remove every artist to continue.</p>
-          } @else if (!hasAnyTracks()) {
-            <p class="required-hint">Select at least one track to continue.</p>
-          }
+          <div class="wizard-footer">
+            @if (!allArtistsResolved()) {
+              <p class="required-hint">Resolve or remove every artist to continue.</p>
+            } @else if (!hasAnyTracks()) {
+              <p class="required-hint">Select at least one track to continue.</p>
+            }
 
-          @if (hasAnyTracks()) {
-            <div class="total-duration">
-              <span class="total-duration-label">Total playlist time</span>
-              <span class="total-duration-value">{{ formatDurationWords(totalDurationMs()) }}</span>
+            @if (hasAnyTracks()) {
+              <div class="total-duration">
+                <span class="total-duration-label">Total playlist time</span>
+                <span class="total-duration-value">{{ formatDurationWords(totalDurationMs()) }}</span>
+              </div>
+            }
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!hasAnyTracks() || !allArtistsResolved()"
+                (click)="goToMixTab()"
+              >
+                Next
+              </button>
             </div>
-          }
-
-          <div class="step-actions">
-            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              [disabled]="!hasAnyTracks() || !allArtistsResolved()"
-              (click)="goToMixTab()"
-            >
-              Next
-            </button>
           </div>
         </div>
       }
@@ -457,29 +477,31 @@
             }
           </div>
 
-          @if (selectedPlaylistId(); as playlistId) {
-            @if (addError()) {
-              <p class="error">{{ addError() }}</p>
+          <div class="wizard-footer">
+            @if (selectedPlaylistId(); as playlistId) {
+              @if (addError()) {
+                <p class="error">{{ addError() }}</p>
+              }
+              <div class="step-actions">
+                <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="!hasAnyTracks() || isAddingToPlaylist()"
+                  (click)="addSongsToSelectedPlaylist(playlistId)"
+                >
+                  {{ isAddingToPlaylist() ? 'Adding…' : 'Add' }}
+                </button>
+              </div>
+            } @else {
+              <div class="step-actions">
+                <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
+                <button type="button" class="btn btn-primary" [disabled]="!hasAnyTracks()" (click)="goToGenerateTab()">
+                  Next
+                </button>
+              </div>
             }
-            <div class="step-actions">
-              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="!hasAnyTracks() || isAddingToPlaylist()"
-                (click)="addSongsToSelectedPlaylist(playlistId)"
-              >
-                {{ isAddingToPlaylist() ? 'Adding…' : 'Add' }}
-              </button>
-            </div>
-          } @else {
-            <div class="step-actions">
-              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
-              <button type="button" class="btn btn-primary" [disabled]="!hasAnyTracks()" (click)="goToGenerateTab()">
-                Next
-              </button>
-            </div>
-          }
+          </div>
         </div>
       }
 
@@ -488,6 +510,7 @@
           <label class="field-label required" for="playlist-name">Playlist Name:</label>
           <input
             id="playlist-name"
+            #playlistNameEl
             type="text"
             class="text-input"
             required
@@ -520,24 +543,25 @@
             </button>
           </div>
 
-          @if (generateError()) {
-            <p class="error">{{ generateError() }}</p>
-          }
+          <div class="wizard-footer">
+            @if (generateError()) {
+              <p class="error">{{ generateError() }}</p>
+            }
+            @if (!hasPlaylistName() && !isGenerating()) {
+              <p class="required-hint">Enter a playlist name to continue.</p>
+            }
 
-          @if (!hasPlaylistName() && !isGenerating()) {
-            <p class="required-hint">Enter a playlist name to continue.</p>
-          }
-
-          <div class="step-actions">
-            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('mix')">Back</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              [disabled]="!hasPlaylistName() || isGenerating()"
-              (click)="generatePlaylist()"
-            >
-              {{ isGenerating() ? 'Generating…' : 'Generate' }}
-            </button>
+            <div class="step-actions">
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('mix')">Back</button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!hasPlaylistName() || isGenerating()"
+                (click)="generatePlaylist()"
+              >
+                {{ isGenerating() ? 'Generating…' : 'Generate' }}
+              </button>
+            </div>
           </div>
         </div>
       }

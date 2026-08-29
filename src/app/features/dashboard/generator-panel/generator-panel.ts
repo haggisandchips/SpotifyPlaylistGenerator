@@ -119,6 +119,8 @@ export class GeneratorPanel {
 
   private readonly playlistGrid = viewChild<ElementRef<HTMLElement>>('playlistGrid');
   private readonly artistPanelsEl = viewChild<ElementRef<HTMLElement>>('artistPanels');
+  private readonly artistsInputEl = viewChild<ElementRef<HTMLTextAreaElement>>('artistsInputEl');
+  private readonly playlistNameEl = viewChild<ElementRef<HTMLInputElement>>('playlistNameEl');
 
   readonly playlistSelected = output<string | null>();
   readonly playlistCreated = output<string>();
@@ -255,6 +257,17 @@ export class GeneratorPanel {
       const index = TAB_ORDER.indexOf(this.activeTab());
       if (index > this.furthestTabIndex()) {
         this.furthestTabIndex.set(index);
+      }
+    });
+
+    // Focus the primary field on tabs that start with one, so typing doesn't need an extra
+    // click. Reads only activeTab() so this fires on tab switches, never on keystrokes.
+    effect(() => {
+      const tab = this.activeTab();
+      if (tab === 'artists') {
+        queueMicrotask(() => this.artistsInputEl()?.nativeElement.focus());
+      } else if (tab === 'generate') {
+        queueMicrotask(() => this.playlistNameEl()?.nativeElement.focus());
       }
     });
 
