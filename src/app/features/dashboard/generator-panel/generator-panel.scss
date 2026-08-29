@@ -611,3 +611,68 @@
   font-weight: 800;
   color: #1db954;
 }
+
+.mix-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.mix-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.mix-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: #0f0f0f;
+  border: 1px solid #282828;
+  border-radius: 8px;
+}
+
+.mix-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mix-item-artist {
+  font-size: 0.8rem;
+  color: #727272;
+}
+
+.drag-handle {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b3b3b3;
+  font-size: 1.2rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.mix-item.cdk-drag-preview {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  border-color: #1db954;
+}
+
+.mix-item.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.mix-list.cdk-drop-list-dragging .mix-item:not(.cdk-drag-placeholder) {
+  transition: transform 0.2s ease;
+}

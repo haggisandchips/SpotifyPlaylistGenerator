@@ -1,4 +1,5 @@
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { SpotifyApi, SpotifyArtist, SpotifyPlaylist, SpotifyTrack } from '../../../core/spotify/spotify-api';
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -87,12 +88,18 @@ interface HoveredCandidate {
   candidate: SpotifyArtist;
 }
 
-type GeneratorTab = 'playlists' | 'artists' | 'songs' | 'generate';
+interface MixTrackItem {
+  key: string;
+  track: SpotifyTrack;
+  artistName: string;
+}
 
-const TAB_ORDER: GeneratorTab[] = ['playlists', 'artists', 'songs', 'generate'];
+type GeneratorTab = 'playlists' | 'artists' | 'songs' | 'mix' | 'generate';
+
+const TAB_ORDER: GeneratorTab[] = ['playlists', 'artists', 'songs', 'mix', 'generate'];
 
 @Component({
-  imports: [],
+  imports: [DragDropModule],
   selector: 'app-generator-panel',
   styleUrl: './generator-panel.scss',
   templateUrl: './generator-panel.html',
@@ -148,6 +155,13 @@ export class GeneratorPanel {
   protected readonly isAddingToPlaylist = signal(false);
   protected readonly addError = signal<string | null>(null);
 
+  // Custom track order for the Mix It Up tab. Null means "untouched" — the list just tracks
+  // the natural (per-artist) order live, so tracks added/removed on the Songs tab slot straight
+  // into place. Once the user drags or shuffles, this holds the full ordering going forward, and
+  // any track added afterwards (e.g. via "Add More") is appended at the end rather than being
+  // spliced into the middle of a list they've already arranged.
+  protected readonly mixOrder = signal<string[] | null>(null);
+
   protected readonly hasArtists = computed(() => this.artistsInput().trim().length > 0);
   protected readonly hasAnyTracks = computed(() =>
     (this.artistSlots() ?? []).some((slot) => slot.tracks.length > 0),
@@ -172,6 +186,46 @@ export class GeneratorPanel {
   protected readonly totalDurationMs = computed(() =>
     (this.artistSlots() ?? []).reduce((sum, slot) => sum + this.slotDurationMs(slot), 0),
   );
+
+  // Every selected track, flattened across artists in their natural (Songs-tab) order. A
+  // track's key combines its slot and track id since the same track could in principle be
+  // pulled in under two different artist searches (e.g. a duet).
+  private readonly naturalMixItems = computed<MixTrackItem[]>(() =>
+    (this.artistSlots() ?? []).flatMap((slot) =>
+      slot.tracks.map((track) => ({
+        key: `${slot.id}:${track.id}`,
+        track,
+        artistName: slot.artist?.name ?? slot.queryText,
+      })),
+    ),
+  );
+
+  // The Mix It Up tab's actual display/playlist order: the natural order, with any stored
+  // manual ordering applied on top and reconciled against whatever's currently selected —
+  // stale (removed) keys drop out, newly-selected tracks land at the end.
+  protected readonly mixedTracks = computed<MixTrackItem[]>(() => {
+    const natural = this.naturalMixItems();
+    const order = this.mixOrder();
+    if (!order) {
+      return natural;
+    }
+
+    const byKey = new Map(natural.map((item) => [item.key, item]));
+    const ordered: MixTrackItem[] = [];
+    for (const key of order) {
+      const item = byKey.get(key);
+      if (item) {
+        ordered.push(item);
+        byKey.delete(key);
+      }
+    }
+    for (const item of natural) {
+      if (byKey.has(item.key)) {
+        ordered.push(item);
+      }
+    }
+    return ordered;
+  });
 
   // Render order for the Songs tab: slots the initial automatic lookup couldn't confirm are
   // pushed to the bottom (out of the way while they're being resolved) but keep their
@@ -495,6 +549,25 @@ export class GeneratorPanel {
     return parts.join(', ');
   }
 
+  onMixDrop(event: CdkDragDrop<MixTrackItem[]>): void {
+    const keys = this.mixedTracks().map((item) => item.key);
+    moveItemInArray(keys, event.previousIndex, event.currentIndex);
+    this.mixOrder.set(keys);
+  }
+
+  shuffleMix(): void {
+    const keys = this.mixedTracks().map((item) => item.key);
+    for (let i = keys.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [keys[i], keys[j]] = [keys[j], keys[i]];
+    }
+    this.mixOrder.set(keys);
+  }
+
+  resetMixOrder(): void {
+    this.mixOrder.set(null);
+  }
+
   private setArtistPreview(artistId: string, state: ArtistPreviewState): void {
     this.artistPreviews.update((map) => {
       const next = new Map(map);
@@ -611,6 +684,10 @@ export class GeneratorPanel {
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  goToMixTab(): void {
+    this.activeTab.set('mix');
+  }
+
   goToGenerateTab(): void {
     this.activeTab.set('generate');
   }
@@ -625,7 +702,7 @@ export class GeneratorPanel {
     this.generateError.set(null);
 
     try {
-      const uris = (this.artistSlots() ?? []).flatMap((slot) => slot.tracks.map((track) => track.uri));
+      const uris = this.mixedTracks().map((item) => item.track.uri);
 
       const playlist = await this.spotifyApi.createPlaylist(this.userId(), {
         name,
@@ -651,7 +728,7 @@ export class GeneratorPanel {
     this.addError.set(null);
 
     try {
-      const uris = (this.artistSlots() ?? []).flatMap((slot) => slot.tracks.map((track) => track.uri));
+      const uris = this.mixedTracks().map((item) => item.track.uri);
 
       if (uris.length > 0) {
         await this.spotifyApi.addTracksToPlaylist(playlistId, uris);
@@ -682,6 +759,7 @@ export class GeneratorPanel {
     this.artistsInput.set('');
     this.songsPerArtist.set(5);
     this.artistSlots.set(null);
+    this.mixOrder.set(null);
     this.playlistName.set('');
     this.playlistDescription.set('');
     this.isPrivate.set(true);

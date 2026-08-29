@@ -33,6 +33,17 @@
     >
       Songs
     </button>
+    <button
+      type="button"
+      class="tab"
+      role="tab"
+      [class.active]="activeTab() === 'mix'"
+      [attr.aria-selected]="activeTab() === 'mix'"
+      [disabled]="!isTabReachable('mix')"
+      (click)="goToTab('mix')"
+    >
+      Mix It Up
+    </button>
     @if (!selectedPlaylistId()) {
       <button
         type="button"
@@ -83,6 +94,9 @@
         } @else {
           <p><span class="stage-info-text">Review each artist's tracks below, remove any you don't want, then continue.</span></p>
         }
+      }
+      @case ('mix') {
+        <p><span class="stage-info-text">Drag tracks by their handle to reorder the playlist, or shuffle everything at once.</span></p>
       }
       @case ('generate') {
         <p><span class="stage-info-text">Name your playlist, add an optional description, choose whether it's private, and generate it.</span></p>
@@ -394,16 +408,65 @@
             </div>
           }
 
+          <div class="step-actions">
+            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!hasAnyTracks() || !allArtistsResolved()"
+              (click)="goToMixTab()"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
+
+      @case ('mix') {
+        <div class="step">
+          <div class="mix-toolbar">
+            <button
+              type="button"
+              class="btn btn-secondary shuffle-btn"
+              (click)="shuffleMix()"
+              title="Shuffle the order of every selected track"
+            >
+              🔀 Shuffle
+            </button>
+            @if (mixOrder()) {
+              <button
+                type="button"
+                class="btn btn-secondary reset-order-btn"
+                (click)="resetMixOrder()"
+                title="Put every track back in its original order"
+              >
+                Reset Order
+              </button>
+            }
+          </div>
+
+          <div class="mix-list" cdkDropList (cdkDropListDropped)="onMixDrop($event)">
+            @for (item of mixedTracks(); track item.key) {
+              <div class="mix-item" cdkDrag>
+                <span class="mix-item-info">
+                  <span class="track-name">{{ item.track.name }}</span>
+                  <span class="mix-item-artist">{{ item.artistName }}</span>
+                </span>
+                <span class="drag-handle" cdkDragHandle title="Drag to reorder" aria-label="Drag to reorder">⠿</span>
+              </div>
+            }
+          </div>
+
           @if (selectedPlaylistId(); as playlistId) {
             @if (addError()) {
               <p class="error">{{ addError() }}</p>
             }
             <div class="step-actions">
-              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
               <button
                 type="button"
                 class="btn btn-primary"
-                [disabled]="!hasAnyTracks() || !allArtistsResolved() || isAddingToPlaylist()"
+                [disabled]="!hasAnyTracks() || isAddingToPlaylist()"
                 (click)="addSongsToSelectedPlaylist(playlistId)"
               >
                 {{ isAddingToPlaylist() ? 'Adding…' : 'Add' }}
@@ -411,13 +474,8 @@
             </div>
           } @else {
             <div class="step-actions">
-              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('artists')">Back</button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="!hasAnyTracks() || !allArtistsResolved()"
-                (click)="goToGenerateTab()"
-              >
+              <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
+              <button type="button" class="btn btn-primary" [disabled]="!hasAnyTracks()" (click)="goToGenerateTab()">
                 Next
               </button>
             </div>
@@ -471,7 +529,7 @@
           }
 
           <div class="step-actions">
-            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('songs')">Back</button>
+            <button type="button" class="btn btn-secondary back-btn" (click)="goToTab('mix')">Back</button>
             <button
               type="button"
               class="btn btn-primary"
