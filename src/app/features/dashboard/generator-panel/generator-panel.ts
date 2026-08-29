@@ -277,7 +277,18 @@ export class GeneratorPanel {
         };
       }
 
-      return { ...base, status: 'searching', rawSearchResults: candidates, searchError: null };
+      // No strict match at all means the artist's name doesn't literally appear in any
+      // candidate (e.g. a typo or alternate spelling), so start with fuzzy results shown
+      // since strict filtering would otherwise leave the list empty. More than one strict
+      // match means the query is genuinely ambiguous between distinct real matches, so start
+      // narrowed to strict so the user isn't shown noise on top of a already-plausible list.
+      return {
+        ...base,
+        status: 'searching',
+        rawSearchResults: candidates,
+        searchError: null,
+        fuzzyMatching: strictCandidates.length === 0,
+      };
     } catch {
       return {
         ...base,
