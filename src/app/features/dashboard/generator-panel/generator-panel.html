@@ -48,6 +48,48 @@
     }
   </div>
 
+  <div class="stage-info">
+    @switch (activeTab()) {
+      @case ('playlists') {
+        <p><span class="stage-info-text">Pick a playlist to add songs to, or start a new one.</span></p>
+      }
+      @case ('artists') {
+        <p><span class="stage-info-text">List the artists you want, one per line, then continue.</span></p>
+      }
+      @case ('songs') {
+        @if (isLookingUp()) {
+          <p>
+            <span class="stage-info-text">
+              Looking up artists and their top tracks — {{ lookupProgress().processed }}/{{ lookupProgress().total }} done.
+            </span>
+          </p>
+        } @else if (unresolvedSlots().length; as count) {
+          <p>
+            <span class="stage-info-text">
+              {{ count }} artist{{ count === 1 ? '' : 's' }} couldn't be matched and
+              {{ count === 1 ? "is" : "are" }} now at the bottom — confirm
+              {{ count === 1 ? "it" : "them" }} there and {{ count === 1 ? "it'll" : "they'll" }} jump back to place.
+            </span>
+            <button
+              type="button"
+              class="jump-btn"
+              (click)="scrollToFirstUnresolved()"
+              title="Jump to the first artist that needs confirming"
+              aria-label="Jump to the first artist that needs confirming"
+            >
+              ↓
+            </button>
+          </p>
+        } @else {
+          <p><span class="stage-info-text">Review each artist's tracks below, remove any you don't want, then continue.</span></p>
+        }
+      }
+      @case ('generate') {
+        <p><span class="stage-info-text">Name your playlist, add an optional description, choose whether it's private, and generate it.</span></p>
+      }
+    }
+  </div>
+
   <div class="tab-panel">
     @switch (activeTab()) {
       @case ('playlists') {
@@ -136,9 +178,9 @@
             </p>
           }
 
-          <div class="artist-panels">
+          <div class="artist-panels" #artistPanels>
             @for (slot of displaySlots(); track slot.id) {
-              <div class="artist-panel">
+              <div class="artist-panel" [attr.data-slot-id]="slot.id">
                 @if (slot.status === 'loading') {
                   <div class="artist-header">
                     <div class="artist-avatar artist-avatar-placeholder artist-avatar-loading"></div>

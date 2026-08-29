@@ -111,6 +111,7 @@ export class GeneratorPanel {
   readonly highlightPlaylistId = input<string | null>(null);
 
   private readonly playlistGrid = viewChild<ElementRef<HTMLElement>>('playlistGrid');
+  private readonly artistPanelsEl = viewChild<ElementRef<HTMLElement>>('artistPanels');
 
   readonly playlistSelected = output<string | null>();
   readonly playlistCreated = output<string>();
@@ -154,6 +155,17 @@ export class GeneratorPanel {
   protected readonly allArtistsResolved = computed(() =>
     (this.artistSlots() ?? []).every((slot) => slot.status === 'resolved'),
   );
+  // Slots still loading or awaiting manual confirmation — surfaced in the stage-info panel so
+  // the user knows there's something to act on even if it's scrolled out of view below.
+  protected readonly unresolvedSlots = computed(() =>
+    (this.artistSlots() ?? []).filter((slot) => slot.status !== 'resolved'),
+  );
+  // How many artists the initial lookup has finished with (resolved or needing manual
+  // confirmation) vs. the total, so the stage-info panel can show visible progress on a long list.
+  protected readonly lookupProgress = computed(() => {
+    const slots = this.artistSlots() ?? [];
+    return { processed: slots.filter((slot) => slot.status !== 'loading').length, total: slots.length };
+  });
   protected readonly hasPlaylistName = computed(() => this.playlistName().trim().length > 0);
 
   // Render order for the Songs tab: slots the initial automatic lookup couldn't confirm are
@@ -558,6 +570,16 @@ export class GeneratorPanel {
     const additional = pool.slice(0, 5);
     this.infoMessage.set(null);
     this.updateSlot(slot.id, { tracks: [...slot.tracks, ...additional] });
+  }
+
+  scrollToFirstUnresolved(): void {
+    const firstUnresolved = this.unresolvedSlots()[0];
+    if (!firstUnresolved) {
+      return;
+    }
+    const container = this.artistPanelsEl()?.nativeElement;
+    const target = container?.querySelector<HTMLElement>(`[data-slot-id="${firstUnresolved.id}"]`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   goToGenerateTab(): void {
